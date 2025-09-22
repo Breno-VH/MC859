@@ -11,6 +11,7 @@ pycache/
 *~
 *.log
 *.sqlite3
+.DS_Store
 #Arquivos de IDEs
 
 .idea/

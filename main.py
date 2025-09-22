@@ -24,7 +24,7 @@ if os.path.exists(GRAPH_FILE):
         
         try:
             df = pd.read_csv('qty_downloads_libs.csv', skiprows=1, header=None, names=['package_name', 'country_code', 'total_downloads'])
-            initial_packages_list = df['package_name'].head(50).tolist()
+            initial_packages_list = df['package_name'].tolist()
         except FileNotFoundError:
             print("Erro: O arquivo 'qty_downloads_libs.csv' não foi encontrado.")
             exit()
@@ -39,7 +39,7 @@ else:
     print(f"Arquivo '{GRAPH_FILE}' não encontrado. Coletando dados da API...")
     try:
         df = pd.read_csv('qty_downloads_libs.csv', skiprows=1, header=None, names=['package_name', 'country_code', 'total_downloads'])
-        initial_packages_list = df['package_name'].head(15).tolist()
+        initial_packages_list = df['package_name'].tolist()
     except FileNotFoundError:
         print("Erro: O arquivo 'qty_downloads_libs.csv' não foi encontrado.")
         exit()
