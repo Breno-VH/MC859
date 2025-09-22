@@ -1,0 +1,31 @@
+#Arquivos e diretórios de build
+
+.venv/
+venv/
+env/
+#Arquivos de cache e temporários
+
+pycache/
+*.pyc
+*.pyo
+*~
+*.log
+*.sqlite3
+#Arquivos de IDEs
+
+.idea/
+.vscode/
+
+# Arquivos de dados e relatórios
+dependency_graph.graphml
+# Arquivos de notebooks e testes
+
+.ipynb_checkpoints
+.pytest_cache/
+htmlcov/
+.coverage
+# Arquivos de configurações sensíveis
+
+.env
+*.json.secret
+*.yml.secret
