@@ -4,10 +4,11 @@ import os
 import asyncio
 import collections
 import json
+import matplotlib.pyplot as plt
 
 # Importa as funções dos módulos criados
 from data_collector import build_dependency_graph
-from visualizer import plot_degree_distribution
+from visualizer import plot_degree_distribution, plot_scc_distribution
 
 # --- INÍCIO DO PROJETO ---
 GRAPH_FILE = 'dependency_graph.graphml'
@@ -116,6 +117,25 @@ for pkg in vulnerable_nodes:
     print(f"- {pkg}")
 
 
+# 5. Análise e Visualização de CFSs
+print("\n" + "="*60 + "\n")
+print("Análise de Componentes Fortemente Conexas (CFSs):")
+
+# Encontra e exibe a primeira CFS de tamanho entre 3 e 6
+found_scc = False
+for component in scc:
+    if 3 <= len(component) <= 6:
+        print(f"Primeira CFS encontrada com tamanho entre 3 e 6 ({len(component)}):")
+        for member in component:
+            print(f"  - {member}")
+        found_scc = True
+        break
+if not found_scc:
+    print("Nenhuma CFS com tamanho entre 3 e 6 foi encontrada.")
+
+# Plota a distribuição do tamanho das CFSs
+plot_scc_distribution(G)
+
 # Simulação de Propagação (descomentada, se necessário)
 # VULNERABLE_PACKAGE_TO_SIMULATE = 'awscrt'
 # affected_set = simulate_vulnerability_spread(G, VULNERABLE_PACKAGE_TO_SIMULATE)
@@ -125,5 +145,5 @@ for pkg in vulnerable_nodes:
 # else:
 #     print("Nenhum pacote afetado encontrado (ou o pacote inicial não está no grafo).")
 
-# 5. Visualização da Distribuição de Graus
+# 6. Visualização da Distribuição de Graus
 plot_degree_distribution(G)

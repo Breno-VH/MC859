@@ -40,5 +40,26 @@ def plot_degree_distribution(G):
     except ImportError:
         print("\nErro: matplotlib não está instalado. Por favor, instale com 'pip install matplotlib'.")
 
-# A função visualize_graph foi removida para focar na distribuição de graus.
-# A simulação de vulnerabilidade foi movida para main.py para fins de relatório.
+def plot_scc_distribution(G):
+    """
+    Plota a distribuição do tamanho das Componentes Fortemente Conexas (CFSs).
+    Usa escala log-log para destacar a estrutura de cauda longa, se existir.
+    """
+    try:
+        scc = list(nx.strongly_connected_components(G))
+        scc_sizes = [len(c) for c in scc]
+        scc_counts = collections.Counter(scc_sizes)
+
+        sizes = list(scc_counts.keys())
+        counts = list(scc_counts.values())
+
+        plt.figure(figsize=(10, 6))
+        plt.loglog(sizes, counts, 'g.', marker='o')
+        plt.title('Distribuição do Tamanho das Componentes Fortemente Conexas (CFSs)')
+        plt.xlabel('Tamanho da CFS')
+        plt.ylabel('Frequência (Número de CFSs)')
+        plt.grid(True, which="both", ls="--")
+        plt.show()
+
+    except ImportError:
+        print("\nErro: matplotlib não está instalado. Por favor, instale com 'pip install matplotlib'.")
