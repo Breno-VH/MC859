@@ -5,6 +5,7 @@ import time
 import re
 import os
 import pandas as pd
+import json
 
 async def get_package_data(session, package_name):
     """
@@ -21,6 +22,29 @@ async def get_package_data(session, package_name):
     except aiohttp.ClientError as e:
         print(f"Erro ao acessar a API para o pacote {package_name}: {e}")
         return None
+
+async def get_osv_vulnerabilities(session, package_name, version):
+    """
+    Busca vulnerabilidades para um pacote e versão na API OSV.
+    """
+    url = "https://api.osv.dev/v1/query"
+    payload = {
+        "package": {
+            "name": package_name,
+            "ecosystem": "PyPI"
+        },
+        "version": version
+    }
+    try:
+        async with session.post(url, json=payload, timeout=10) as response:
+            response.raise_for_status()
+            await asyncio.sleep(0.05)
+            data = await response.json()
+            # Retorna apenas a lista de vulnerabilidades se o campo 'vulns' existir
+            return data.get('vulns', [])
+    except aiohttp.ClientError as e:
+        print(f"Erro ao acessar a API OSV para {package_name}@{version}: {e}")
+        return []
 
 def extract_clean_dependencies(dependencies_list):
     """
@@ -64,6 +88,8 @@ async def build_dependency_graph(initial_packages, graph, visited_packages, max_
 
             responses = await asyncio.gather(*tasks, return_exceptions=True)
 
+            osv_tasks = []
+            valid_packages_for_osv = []
             for i, response_data in enumerate(responses):
                 package_name, current_depth = current_batch[i]
                 print(f"Coletando dados para: {package_name} (Profundidade: {current_depth})")
@@ -73,6 +99,21 @@ async def build_dependency_graph(initial_packages, graph, visited_packages, max_
                     continue
                 
                 info = response_data['info']
+
+                all_vulnerabilities = []
+                vulnerabilities_data = response_data.get('vulnerabilities', [])
+                for vuln in vulnerabilities_data:
+                    vulnerability_info = {
+                        'id': vuln.get('id'),
+                        'summary': vuln.get('summary', 'No summary provided.'),
+                        'fixed_in': vuln.get('fixed_in', []),
+                        'withdrawn': vuln.get('withdrawn')
+                    }
+                    all_vulnerabilities.append(vulnerability_info)
+
+                last_updated = info.get('upload_time_iso_8601', 'N/A')
+                classifiers_info = info.get('classifiers', [])
+                version = info.get('version', '')
                 
                 try:
                     latest_release = response_data['releases'].get(info.get('version', ''))
@@ -80,25 +121,20 @@ async def build_dependency_graph(initial_packages, graph, visited_packages, max_
                 except (IndexError, KeyError, TypeError):
                     size = 0
 
-                vulnerabilities = str(response_data.get('vulnerabilities', []))
-                version = info.get('version', '')
-                # python_version_req = info.get('requires_python', '')
                 dev_status = next((c for c in info.get('classifiers', []) if 'Development Status' in c), '')
 
-                # --- Lógica de Depuração Adicionada ---
                 node_attributes = {
                     'size': size,
-                    'vulnerabilities': vulnerabilities,
+                    'vulnerabilities': all_vulnerabilities,
                     'version': version,
-                    # 'python_version_req': python_version_req,
-                    'dev_status': dev_status
+                    'dev_status': dev_status,
+                    'last_updated': last_updated,
+                    'classifiers': classifiers_info,
                 }
                 
-                # Verifica se há valores None nos atributos antes de adicionar ao grafo
                 for key, value in node_attributes.items():
                     if value is None:
-                        print(f"DEBUG: O pacote '{package_name}' tem o atributo '{key}' com valor None. Corrigindo...")
-                        node_attributes[key] = '' # Substitui o valor None por uma string vazia
+                        node_attributes[key] = '' 
 
                 graph.add_node(package_name, **node_attributes)
 
@@ -109,3 +145,14 @@ async def build_dependency_graph(initial_packages, graph, visited_packages, max_
                     graph.add_edge(dep, package_name)
                     if dep not in visited_packages and current_depth + 1 <= max_depth:
                         queue.append((dep, current_depth + 1))
+                
+                osv_tasks.append(get_osv_vulnerabilities(session, package_name, version))
+                valid_packages_for_osv.append(package_name)
+            
+            osv_responses = await asyncio.gather(*osv_tasks, return_exceptions=True)
+            for i, osv_vulns in enumerate(osv_responses):
+                package_name = valid_packages_for_osv[i]
+                if isinstance(osv_vulns, list):
+                    graph.nodes[package_name]['osv_vulnerabilities'] = osv_vulns
+                else:
+                    graph.nodes[package_name]['osv_vulnerabilities'] = []

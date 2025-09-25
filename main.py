@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import asyncio
 import collections
+import json
 
 # Importa as funções dos módulos criados
 from data_collector import build_dependency_graph
@@ -10,13 +11,24 @@ from visualizer import plot_degree_distribution
 
 # --- INÍCIO DO PROJETO ---
 GRAPH_FILE = 'dependency_graph.graphml'
-MAX_DEPTH = 25
+MAX_DEPTH = 15
 
 # 1. Tenta carregar o grafo de um arquivo, se existir
 if os.path.exists(GRAPH_FILE):
     print(f"Carregando grafo do arquivo '{GRAPH_FILE}'...")
     try:
         G = nx.read_graphml(GRAPH_FILE)
+        # Converte as strings JSON de volta para listas
+        for node, attributes in G.nodes(data=True):
+            # Converte vulnerabilidades de string JSON para lista de dicionários
+            if 'vulnerabilities' in attributes and isinstance(attributes['vulnerabilities'], str):
+                attributes['vulnerabilities'] = json.loads(attributes['vulnerabilities'])
+            # Converte classificadores de string JSON para lista
+            if 'classifiers' in attributes and isinstance(attributes['classifiers'], str):
+                attributes['classifiers'] = json.loads(attributes['classifiers'])
+            # Converte as vulnerabilidades OSV, se existirem
+            if 'osv_vulnerabilities' in attributes and isinstance(attributes['osv_vulnerabilities'], str):
+                attributes['osv_vulnerabilities'] = json.loads(attributes['osv_vulnerabilities'])
     except Exception as e:
         print(f"Erro ao carregar o grafo do arquivo: {e}")
         print("Iniciando a coleta de dados da API.")
@@ -31,6 +43,15 @@ if os.path.exists(GRAPH_FILE):
             
         # Chama a função de forma assíncrona
         asyncio.run(build_dependency_graph(initial_packages_list, G, set(), MAX_DEPTH))
+        
+        # Converte listas para strings JSON antes de salvar
+        for node, attributes in G.nodes(data=True):
+            if 'vulnerabilities' in attributes:
+                attributes['vulnerabilities'] = json.dumps(attributes['vulnerabilities'])
+            if 'classifiers' in attributes:
+                attributes['classifiers'] = json.dumps(attributes['classifiers'])
+            if 'osv_vulnerabilities' in attributes:
+                attributes['osv_vulnerabilities'] = json.dumps(attributes['osv_vulnerabilities'])
         
         nx.write_graphml(G, GRAPH_FILE)
         print(f"Grafo construído e salvo em '{GRAPH_FILE}'.")
@@ -49,6 +70,15 @@ else:
     
     # Chama a função de forma assíncrona
     asyncio.run(build_dependency_graph(initial_packages_list, G, visited, MAX_DEPTH))
+    
+    # Converte listas para strings JSON antes de salvar
+    for node, attributes in G.nodes(data=True):
+        if 'vulnerabilities' in attributes:
+            attributes['vulnerabilities'] = json.dumps(attributes['vulnerabilities'])
+        if 'classifiers' in attributes:
+            attributes['classifiers'] = json.dumps(attributes['classifiers'])
+        if 'osv_vulnerabilities' in attributes:
+            attributes['osv_vulnerabilities'] = json.dumps(attributes['osv_vulnerabilities'])
     
     nx.write_graphml(G, GRAPH_FILE)
     print(f"Grafo construído e salvo em '{GRAPH_FILE}'.")
@@ -70,6 +100,22 @@ print(f"Grau Médio dos Vértices: {avg_degree:.2f}")
 print(f"Número de Componentes Fortemente Conexas (CFSs): {num_scc}")
 print(f"Tamanho da Maior CFS: {largest_scc_size}")
 
+# 4. Análise de Vulnerabilidades
+vulnerable_nodes = []
+for node, attributes in G.nodes(data=True):
+    # Agora a verificação de vulnerabilidades é baseada na API OSV
+    osv_vulnerabilities = attributes.get('osv_vulnerabilities')
+    if isinstance(osv_vulnerabilities, list) and len(osv_vulnerabilities) > 0:
+        vulnerable_nodes.append(node)
+
+print("\n" + "="*60 + "\n")
+print("Análise de Vulnerabilidades:")
+print(f"Total de pacotes com vulnerabilidades conhecidas: {len(vulnerable_nodes)}")
+print("Lista de pacotes vulneráveis:")
+for pkg in vulnerable_nodes:
+    print(f"- {pkg}")
+
+
 # Simulação de Propagação (descomentada, se necessário)
 # VULNERABLE_PACKAGE_TO_SIMULATE = 'awscrt'
 # affected_set = simulate_vulnerability_spread(G, VULNERABLE_PACKAGE_TO_SIMULATE)
@@ -79,5 +125,5 @@ print(f"Tamanho da Maior CFS: {largest_scc_size}")
 # else:
 #     print("Nenhum pacote afetado encontrado (ou o pacote inicial não está no grafo).")
 
-# 4. Visualização da Distribuição de Graus
+# 5. Visualização da Distribuição de Graus
 plot_degree_distribution(G)
