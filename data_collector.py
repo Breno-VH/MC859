@@ -14,7 +14,7 @@ async def get_package_data(session, package_name):
     """
     url = f"https://pypi.org/pypi/{package_name}/json"
     try:
-        async with session.get(url, timeout=10) as response:
+        async with session.get(url, timeout=20) as response:
             response.raise_for_status()
             await asyncio.sleep(0.05) 
             data = await response.json()
