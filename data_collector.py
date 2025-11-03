@@ -40,7 +40,6 @@ async def get_osv_vulnerabilities(session, package_name, version):
             response.raise_for_status()
             await asyncio.sleep(0.05)
             data = await response.json()
-            # Retorna apenas a lista de vulnerabilidades se o campo 'vulns' existir
             return data.get('vulns', [])
     except aiohttp.ClientError as e:
         print(f"Erro ao acessar a API OSV para {package_name}@{version}: {e}")

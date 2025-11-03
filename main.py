@@ -2,7 +2,11 @@ import networkx as nx
 import json
 import random
 from typing import Dict, List, Any, Tuple
-from analysis_utils import analyze_risk_classification, extract_project_risk_data # Importando funções de análise
+# NOVAS DEPENDÊNCIAS PARA VISUALIZAÇÃO
+import matplotlib.pyplot as plt
+import seaborn as sns 
+from analysis_utils import analyze_risk_classification, extract_project_risk_data
+from reachability_analysis import calculate_reachability_metrics
 
 # --- CONFIGURAÇÕES DE PONTUAÇÃO DE RISCO ---
 RISK_SCORES = {
@@ -86,6 +90,7 @@ def analyze_risks_and_generate_report(G: nx.DiGraph) -> Tuple[List[Dict[str, Any
 
             for vuln in vulnerabilities:
                 # Determinar o nível de severidade e pontuação
+                # Usamos a mesma lógica de fallback para garantir a classificação de risco
                 severity = vuln.get('database_specific', {}).get('severity', 'LOW').upper()
                 score = RISK_SCORES.get(severity, 1.0)
                 
@@ -125,6 +130,7 @@ def analyze_risks_and_generate_report(G: nx.DiGraph) -> Tuple[List[Dict[str, Any
             in_degree = in_degree_map.get(package_name, 0)
             
             # Risco ponderado: multiplica a pontuação de risco pela influência (log(dependentes))
+            # Ajuste na ponderação: (1 + sqrt(in_degree)) para dar peso crescente à dependência
             weighted_risk_score = max_risk_score * (1 + (in_degree ** 0.5))
 
             vulnerability_report.append({
@@ -146,62 +152,16 @@ def analyze_risks_and_generate_report(G: nx.DiGraph) -> Tuple[List[Dict[str, Any
     return vulnerability_report, top_packages_for_project_analysis
 
 
-def print_packages_with_cwe(vulnerability_report: List[Dict[str, Any]]):
-    """
-    Imprime um relatório detalhado de pacotes que conseguiram ter CWE IDs extraídos.
-    """
-    
-    packages_with_cwe = [
-        item for item in vulnerability_report 
-        if item['cwe_ids']
-    ]
-
-    print("\n====================================================================================================")
-    print("--- DETALHE: PACOTES VULNERÁVEIS COM CWE ID REGISTRADO (TODOS OS NÍVEIS) ---")
-    
-    if packages_with_cwe:
-        packages_with_cwe.sort(key=lambda x: x['weighted_risk_score'], reverse=True)
-        
-        print(f"Total de {len(packages_with_cwe)} itens com CWE IDs válidos encontrados:")
-        
-        header = f"\n{'PACOTE':<30} | {'RISCO MÁX.':<12} | {'RISCO POND.':<12} | {'CWE IDs':<40}"
-        print("-" * len(header))
-        print(header)
-        print("-" * len(header))
-
-        for item in packages_with_cwe[:10]:
-            cwe_list_display = ', '.join(item['cwe_ids'])
-            
-            print(
-                f"{item['package_name']:<30} | "
-                f"{item['risk_level']:<12} | "
-                f"{item['weighted_risk_score']:.2f}{'':<12} | "
-                f"{cwe_list_display:<40}"
-            )
-            summary = item.get('vulnerability_summary', [{}])[0].get('summary', 'Sem resumo detalhado disponível.')
-            print(f"    Resumo (Primeira Vuln): {str(summary)[:100]}...")
-            print("-" * len(header))
-        
-        if len(packages_with_cwe) > 10:
-             print(f"... e mais {len(packages_with_cwe) - 10} pacotes com CWE ID registrado.")
-    else:
-        print("Nenhum pacote vulnerável com CWE ID válido encontrado nos dados de entrada.")
-        print("\n--- AVISO DE DADOS FALTANTES ---")
-        print("A ausência de CWE IDs indica que o campo 'cwe_ids' está faltando ou é inválido nos dados de vulnerabilidade do GraphML.")
-        print("---------------------------------")
-
-    print("====================================================================================================")
-
-
 def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: List[Dict[str, str]], cwe_classification: List[Tuple[str, int]]):
     """Imprime os relatórios de análise no console."""
 
     # 1. RELATÓRIO TOP 15 DE RISCO PONDERADO
     print("====================================================================================================")
-    print("RELATÓRIO DE ANÁLISE DE DEPENDÊNCIAS - RISCO PONDERADO (TOP 15)")
+    print("RELATÓRIO DE ANÁLISE DE DEPENDÊNCIAS - RISCO PONDERADO E ALCANCE (TOP 15)")
     print("====================================================================================================")
     
-    header = f"{'PACOTE':<30} | {'VERSÃO ATINGIDA':<20} | {'RISCO MÁX.':<12} | {'DEPENDENTES':<15} | {'RISCO POND.':<15}"
+    # Novo header com a coluna de Profundidade Mínima
+    header = f"{'PACOTE':<30} | {'VERSÃO ATINGIDA':<20} | {'RISCO MÁX.':<12} | {'DEPENDENTES':<15} | {'PROF. MIN.':<12} | {'RISCO POND.':<15}"
     separator = "-" * len(header)
     
     print(header)
@@ -209,13 +169,17 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
     
     for item in vulnerability_report[:15]:
         vuln_details = item.get('vulnerability_summary', [{}])[0]
-        version_display = f"({item['package_name']} vulnerável)"
+        version_display = f"({item['package_name']} vulnerável)" 
+        
+        depth = item.get('min_dependency_depth', -1)
+        depth_display = f"{depth}{' (DIRETA)' if depth == 1 else ''}" if depth > 0 else "ISOLADO"
 
         print(
             f"{item['package_name']:<30} | "
             f"{version_display:<20} | "
             f"{item['risk_level']:<12} | "
             f"{item['in_degree_dependents']:<15} | "
+            f"{depth_display:<12} | " # NOVA COLUNA
             f"{item['weighted_risk_score']:.2f}{'<-- CRÍTICO' if item['risk_level'] == 'CRITICAL' else '':<15}"
         )
         
@@ -260,6 +224,41 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
         )
     print("-" * 80)
 
+def generate_cwe_histogram(cwe_classification: List[Tuple[str, int]]):
+    """
+    Gera um histograma (gráfico de barras) das ocorrências de CWE 
+    utilizando Matplotlib e Seaborn e salva o arquivo como PNG.
+    """
+    if not cwe_classification:
+        print("AVISO: Dados de classificação CWE vazios. O histograma não foi gerado.")
+        return
+
+    cwe_labels = [item[0] for item in cwe_classification]
+    cwe_counts = [item[1] for item in cwe_classification]
+    
+    # Utiliza o estilo do Seaborn para um visual mais limpo e profissional
+    sns.set_style("whitegrid") 
+    plt.figure(figsize=(12, 6))
+    
+    # Gera o gráfico de barras com Matplotlib, utilizando a paleta do Seaborn
+    bars = plt.bar(cwe_labels, cwe_counts, color=sns.color_palette("viridis", len(cwe_labels)))
+
+    # Adiciona rótulos de contagem nas barras para clareza
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 0.1, int(yval), 
+                 ha='center', va='bottom', fontsize=10, weight='bold')
+
+    plt.title('Distribuição de Frequência de Tipos de Vulnerabilidade (CWE)', fontsize=16, weight='bold')
+    plt.xlabel('CWE ID (Categorias de Falha)', fontsize=12)
+    plt.ylabel('Contagem de Pacotes Afetados', fontsize=12)
+    plt.xticks(rotation=45, ha='right')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    
+    output_file = "cwe_histogram.png"
+    plt.savefig(output_file)
+    plt.close()
 
 # --- FUNÇÃO PRINCIPAL ---
 def main():
@@ -271,58 +270,27 @@ def main():
         print("Não foi possível processar o relatório. Verifique o arquivo do grafo.")
         return
 
-    # 2. Analisar Riscos
+    # 2. Analisar Riscos Iniciais (Pontuação Ponderada)
     vulnerability_report, top_packages_for_project_analysis = analyze_risks_and_generate_report(G)
     
+    # Se o relatório de vulnerabilidade estiver vazio, avisa e encerra
     if not vulnerability_report:
-        print("Nenhuma vulnerabilidade crítica ou de alto risco encontrada para relatar.")
+        print("AVISO: Nenhuma vulnerabilidade (LOW, MODERATE, HIGH ou CRITICAL) foi detectada após o parsing dos dados. O relatório não será gerado.")
         return
 
-    # =========================================================================
-    # 3. SEÇÃO DE DEBUG PARA ENCONTRAR ITENS SEM CWE ID
-    # =========================================================================
-    print("\n====================================================================================================")
-    print("--- DEBUG: ITENS DE ALTO/CRÍTICO RISCO SEM CWE ID ---")
-    
-    high_or_critical_items = [
-        item for item in vulnerability_report 
-        if item['risk_level'] in ['HIGH', 'CRITICAL']
-    ]
-    
-    no_cwe_items = [
-        item for item in vulnerability_report 
-        if item['risk_level'] in ['HIGH', 'CRITICAL'] and not item['cwe_ids']
-    ]
-    
-    if not high_or_critical_items:
-         print("NOTA: Nenhum pacote foi classificado como ALTO ou CRÍTICO. O sucesso abaixo é trivial.")
+    # 2.5. Analisar Alcance (Reachability) - NOVO PASSO
+    vulnerability_report = calculate_reachability_metrics(G, vulnerability_report)
 
-    if no_cwe_items:
-        print(f"Total de {len(no_cwe_items)} itens de ALTO/CRÍTICO risco sem CWE ID registrado no 'vulnerability_report':")
-        for item in no_cwe_items:
-            print(f"- Pacote: {item['package_name']} | Risco: {item['risk_level']} | Score: {item['weighted_risk_score']:.2f}")
-            
-            for idx, vuln in enumerate(item.get('vulnerability_summary', [])):
-                cwe_list_display = ', '.join(vuln.get('cwe_ids', [])) if vuln.get('cwe_ids') else '[]'
-                print(f"  > Vuln {idx+1} ({vuln.get('id', 'N/A')}): CWEs coletados (RAW): {cwe_list_display}")
-
-            print("---")
-    else:
-        print("SUCESSO: Todos os itens de alto risco contêm pelo menos um CWE ID (normalizado).")
-    
-    print("====================================================================================================")
-    
-    # =========================================================================
-    # 4. SEÇÃO ADICIONAL: PACOTES COM CWE ID REGISTRADO (ENCONTRADOS)
-    # =========================================================================
-    print_packages_with_cwe(vulnerability_report)
-    
-    # 5. Classificar e Extrair Dados Adicionais
+    # 3. Classificar e Extrair Dados Adicionais
+    # Estas funções precisam do 'vulnerability_report' e do grafo completo
     cwe_classification = analyze_risk_classification(vulnerability_report)
     project_risk_data = extract_project_risk_data(G, top_packages_for_project_analysis, count=5)
 
-    # 6. Imprimir Relatório Final (TOP 15, CWE CLASSIFICATION, PROJETO)
+    # 4. Imprimir Relatório Final (TOP 15, CWE CLASSIFICATION, PROJETO)
     print_report(vulnerability_report, project_risk_data, cwe_classification)
+    
+    # 5. Gerar Visualização de Dados (NOVO PASSO)
+    generate_cwe_histogram(cwe_classification) # Chama a nova função de visualização
 
 if __name__ == "__main__":
     main()
