@@ -230,10 +230,10 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
 
     # 1. TOP 15 WEIGHTED RISK REPORT (Security x Influence)
     print("====================================================================================================")
-    print("RELATÓRIO DE ANÁLISE DE DEPENDÊNCIAS - RISCO PONDERADO E ALCANCE (TOP 15)")
+    print("Dependency Analysis Report - Weighted Risk and Reach (TOP 15)")
     print("====================================================================================================")
     
-    header = f"{'PACOTE':<30} | {'RISCO MÁX.':<12} | {'DEPENDENTES':<15} | {'PROF. MIN.':<12} | {'RISCO POND.':<15}"
+    header = f"{'PACKAGE':<30} | {'MAX RISK.':<12} | {'DEPENDENTS':<15} | {'MIN DEPTH.':<12} | {'WGT RISK.':<15}"
     separator = "-" * len(header)
     
     print(header)
@@ -243,23 +243,23 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
         vuln_details = item.get('vulnerability_summary', [{}])[0]
         
         depth = item.get('min_dependency_depth', -1)
-        depth_display = f"{depth}{' (DIRETA)' if depth == 1 else ''}" if depth >= 0 else "ISOLADO"
+        depth_display = f"{depth}{' (DIRECT)' if depth == 1 else ''}" if depth >= 0 else "ISOLATED"
 
         print(
             f"{item['package_name']:<30} | "
             f"{item['risk_level']:<12} | "
             f"{item['in_degree_dependents']:<15} | "
             f"{depth_display:<12} | " 
-            f"{item['weighted_risk_score']:.2f}{'<-- CRÍTICO' if item['risk_level'] == 'CRITICAL' else '':<15}"
+            f"{item['weighted_risk_score']:.2f}{'<-- CRITICAL' if item['risk_level'] == 'CRITICAL' else '':<15}"
         )
         
         if item.get('vulnerability_summary'):
             summary = vuln_details.get('summary') 
             
             if summary is None or not str(summary).strip():
-                summary = "Sem resumo detalhado disponível."
+                summary = "no detailed summary possible."
             
-            print(f"    Resumo: {str(summary)[:100]}...")
+            print(f"    Summary: {str(summary)[:100]}...")
             
             cwe_list_display = ', '.join(item['cwe_ids']) if item['cwe_ids'] else '[]'
             print(f"    CWEs: {cwe_list_display}")
@@ -268,21 +268,21 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
     print("\n")
 
     # 2. CWE RISK CLASSIFICATION ANALYSIS
-    print("ANÁLISE DE CLASSIFICAÇÃO DE RISCO (CWE) - TOP TIPOS DE FALHA:")
+    print("RISK CLASSIFICATION ANALYSIS (CWE) - TOP TYPES OF RISKS:")
     print("-" * 70)
-    print(f"{'CWE CATEGORIA':<55} | {'CONTAGEM':<8}")
+    print(f"{'CWE CATEGORY':<55} | {'COUNT':<8}")
     print("-" * 70)
     for category, count in cwe_classification:
         print(f"{category:<55} | {count:<8}")
     if not cwe_classification:
-        print(f"{'Nenhum CWE ID encontrado para classificação':<55} | {0:<8}")
+        print(f"{'No cwe id found for this classification':<55} | {0:<8}")
     print("-" * 70)
     print("\n")
 
     # 3. ENHANCED PROJECT RISK (MAINTENANCE) ANALYSIS - WITH COMPREHENSIVE METRICS
-    print("RISCO DE PROJETO (MANUTENÇÃO) - TOP PACOTES COM MÉTRICAS DETALHADAS:")
+    print("\nENHANCED PROJECT RISK (MAINTENANCE) - WITH COMPREHENSIVE METRICS:")
     print("=" * 160)
-    header_proj = f"{'PACOTE':<25} | {'RISCO':<8} | {'DEP':<5} | {'⭐':<7} | {'👥':<5} | {'SAÚDE':<7} | {'ÚLT.PUSH':<10} | {'ÚLT.REL':<10} | {'ISSUES':<7} | {'STATUS':<15}"
+    header_proj = f"{'PACKAGE':<25} | {'RISK':<8} | {'DEP':<5} | {'⭐':<7} | {'👥':<5} | {'HEALTH':<7} | {'LST.PUSH':<10} | {'LST.RELEASE':<10} | {'ISSUES':<7} | {'STATUS':<15}"
     print(header_proj)
     print("=" * 160)
     
@@ -331,20 +331,20 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
         )
     
     print("=" * 160)
-    print("\nLegenda:")
-    print("  RISCO: Score de risco de manutenção (maior = maior risco)")
-    print("  DEP: Número de pacotes dependentes")
-    print("  ⭐: Estrelas no GitHub")
-    print("  👥: Contribuidores")
-    print("  SAÚDE: Score de saúde da manutenção (0-100, maior = melhor)")
-    print("  ÚLT.PUSH: Dias desde último commit")
-    print("  ÚLT.REL: Dias desde último release")
-    print("  ISSUES: Issues abertas")
-    print("  STATUS: ✅Active (<30d) | ⚠️Slow (<180d) | ❌Stale (>180d) | 📦ARCH (arquivado)")
+    print("\nLegend:")
+    print("  RISK: Risk of maintanence (bigger = riskier)")
+    print("  DEP: Number of dependant packages")
+    print("  ⭐: GitHub stars")
+    print("  👥: Contributors")
+    print("  HEALTH: Maintenence health score (0-100, bigger = better)")
+    print("  LST.PUSH: Days since last commit")
+    print("  LST.RELEASE: Days since last release")
+    print("  ISSUES: Issues open")
+    print("  STATUS: ✅Active (<30d) | ⚠️Slow (<180d) | ❌Stale (>180d) | 📦ARCH (archived)")
     print()
     
     # 4. DETAILED HEALTH ANALYSIS
-    print("\nANÁLISE DETALHADA DE SAÚDE DOS REPOSITÓRIOS:")
+    print("\nDETAILED REPO HEALTH ANALYSIS:")
     print("=" * 160)
     
     for item in project_risk_data[:5]:  # Top 5 most at-risk
@@ -354,34 +354,34 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
         health = item.get('maintenance_health_score', 0)
         health_indicator = "🟢" if health > 70 else "🟡" if health > 40 else "🔴"
         
-        print(f"  {health_indicator} Saúde Geral: {health:.0f}/100")
-        print(f"  ⭐ Popularidade: {item.get('repo_stars', 0):,} estrelas | {item.get('repo_forks', 0):,} forks | {item.get('watchers', 0):,} watchers")
-        print(f"  👥 Comunidade: {item.get('repo_contributors', 0)} contribuidores")
+        print(f"  {health_indicator} Overall Health: {health:.0f}/100")
+        print(f"  ⭐ Popularity: {item.get('repo_stars', 0):,} estrelas | {item.get('repo_forks', 0):,} forks | {item.get('watchers', 0):,} watchers")
+        print(f"  👥 Community: {item.get('repo_contributors', 0)} contributors")
         
         days_push = item.get('days_since_last_push', -1)
         if days_push >= 0:
-            activity_status = "✅ Muito ativo" if days_push < 7 else "🟢 Ativo" if days_push < 30 else "🟡 Moderado" if days_push < 180 else "🔴 Inativo"
-            print(f"  🕐 Última Atividade: {days_push} dias atrás ({activity_status})")
+            activity_status = "✅ Very active" if days_push < 7 else "🟢 Active" if days_push < 30 else "🟡 Moderate" if days_push < 180 else "🔴 Inactive"
+            print(f"  🕐 Last activity: {days_push} days ago ({activity_status})")
         
         days_release = item.get('days_since_release', -1)
         if days_release >= 0:
-            print(f"  📦 Último Release: {days_release} dias atrás")
+            print(f"  📦 Last Release: {days_release} days ago")
         
         license_name = item.get('license', 'N/A')
-        print(f"  📜 Licença: {license_name}")
+        print(f"  📜 License: {license_name}")
         
         if item.get('has_security_policy', False):
-            print(f"  🛡️  Possui política de segurança")
+            print(f"  🛡️  Has security policy")
         
         if item.get('archived', False):
-            print(f"  ⚠️  ATENÇÃO: Repositório ARQUIVADO - não receberá mais atualizações!")
+            print(f"  ⚠️  Attention: arhcived repo, will not receive further updates!")
         
         open_issues = item.get('open_issues', 0)
         watchers = item.get('watchers', 0)
         if watchers > 0:
             issue_ratio = open_issues / watchers
-            issue_status = "🟢 Bom" if issue_ratio < 0.1 else "🟡 Moderado" if issue_ratio < 0.5 else "🔴 Alto"
-            print(f"  🐛 Issues Abertas: {open_issues} (ratio: {issue_ratio:.2f} - {issue_status})")
+            issue_status = "🟢 Good" if issue_ratio < 0.1 else "🟡 Moderate" if issue_ratio < 0.5 else "🔴 High"
+            print(f"  🐛 Issues Open: {open_issues} (ratio: {issue_ratio:.2f} - {issue_status})")
     
     print("=" * 160)
 
@@ -429,14 +429,14 @@ def main():
     # 1. Load Graph (with enhanced URL extraction)
     G = load_dependency_graph(GRAPHML_FILE)
     if not G.number_of_nodes():
-        print("Não foi possível processar o relatório. Verifique o arquivo do grafo.")
+        print("Not able to access graph data, verify path or data integrity")
         return
 
     # 2. Analyze Initial Risks (Weighted Score: Security x Influence)
     vulnerability_report, top_packages_for_project_analysis = analyze_risks_and_generate_report(G)
     
     if not vulnerability_report:
-        print("AVISO: Nenhuma vulnerabilidade (LOW, MODERATE, HIGH ou CRITICAL) foi detectada.")
+        print("Warning: No vulnerability (LOW, MODERATE, HIGH or CRITICAL) detected.")
         return
 
     # 3. Analyze Reachability
@@ -446,7 +446,7 @@ def main():
     cwe_classification = analyze_risk_classification(vulnerability_report)
     
     # 5. Analyze Project/Maintenance Risk (using Stars/Contributors)
-    print("\nIniciando a análise de Risco de Projeto (Manutenção) que requer chamadas externas (GitHub API)...")
+    print("Initianting the analysis of project maintenance risk data, using external calls (GitHub API)...")
     try:
         project_risk_data = asyncio.run(
             extract_project_risk_data(G, top_packages_for_project_analysis, count=10)

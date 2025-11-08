@@ -168,7 +168,7 @@
       "package": "starlite",
       "risk_score": 21.75158686097296,
       "health_score": 100,
-      "stars": 7624,
+      "stars": 7625,
       "contributors": 100,
       "days_since_push": 1,
       "open_issues": 259,
@@ -201,7 +201,7 @@
       "package": "langflow-base",
       "risk_score": 5.782537216049096,
       "health_score": 100,
-      "stars": 137527,
+      "stars": 137529,
       "contributors": 100,
       "days_since_push": 0,
       "open_issues": 869,
@@ -324,6 +324,6 @@
   "metadata": {
     "total_vulnerable_packages": 65,
     "total_analyzed_repos": 10,
-    "timestamp": "2025-11-08T17:26:23.692192+00:00"
+    "timestamp": "2025-11-08T18:11:18.584441+00:00"
   }
 }
