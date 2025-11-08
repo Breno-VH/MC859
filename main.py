@@ -415,7 +415,7 @@ def generate_cwe_histogram(cwe_classification: List[Tuple[str, int]]):
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
     
-    output_file = "cwe_histogram.png"
+    output_file = "visualizations/cwe_histogram.png"
     plt.savefig(output_file)
     plt.close() 
     
@@ -424,7 +424,7 @@ def generate_cwe_histogram(cwe_classification: List[Tuple[str, int]]):
 
 # --- MAIN FUNCTION ---
 def main():
-    GRAPHML_FILE = "dependency_graph.graphml"
+    GRAPHML_FILE = "graph_data/dependency_graph.graphml"
     
     # 1. Load Graph (with enhanced URL extraction)
     G = load_dependency_graph(GRAPHML_FILE)

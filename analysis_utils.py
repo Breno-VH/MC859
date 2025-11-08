@@ -544,7 +544,7 @@ async def extract_project_risk_data(G: nx.DiGraph,
 
 def export_visualization_data(vulnerability_report: List[Dict[str, Any]], 
                               project_risk_data: List[Dict[str, Any]],
-                              output_file: str = "visualization_data.json"):
+                              output_file: str = "graph_data/visualization_data.json"):
     """
     Export data in a format optimized for visualization.
     Creates a JSON file with all metrics needed for charts.
