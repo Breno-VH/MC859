@@ -3,11 +3,13 @@ from typing import Dict, List, Any
 
 def get_shortest_path_to_vulnerable_node(G: nx.DiGraph, vulnerable_node: str) -> int:
     """
-    Calcula o comprimento do caminho mais curto (profundidade) de qualquer nó raiz
-    (pacote de nível superior/dependência direta) até o pacote vulnerável.
+    Calcula a profundidade mínima de dependência (número de saltos/arestas) de qualquer nó raiz 
+    (pacote de nível superior/entrada) até o pacote vulnerável.
     
-    O caminho mais curto (menor profundidade) indica maior risco de uso direto.
-    Retorna o comprimento do caminho mais curto, ou -1 se for inalcançável a partir do topo.
+    Profundidade 1 = Dependência Direta (1 aresta).
+    Profundidade 2+ = Dependência Transitiva (2 ou mais arestas).
+    
+    Retorna a profundidade mínima (>= 1), ou -1 se o nó for inalcançável a partir do topo.
     """
     
     # 1. Identificar nós raiz (pacotes de nível superior - in_degree 0)
@@ -19,7 +21,7 @@ def get_shortest_path_to_vulnerable_node(G: nx.DiGraph, vulnerable_node: str) ->
     # 2. Encontrar o caminho mais curto de qualquer nó raiz para o nó vulnerável
     for root in root_nodes:
         try:
-            # nx.shortest_path_length retorna o número de arestas
+            # nx.shortest_path_length retorna o número de arestas (caminho mais curto)
             path_length = nx.shortest_path_length(G, source=root, target=vulnerable_node)
             if path_length < min_path_length:
                 min_path_length = path_length
@@ -29,8 +31,8 @@ def get_shortest_path_to_vulnerable_node(G: nx.DiGraph, vulnerable_node: str) ->
 
     # 3. Retornar a profundidade
     if min_path_length != float('inf'):
-        # +1 para converter o número de arestas para Profundidade do Pacote
-        return int(min_path_length) + 1
+        # A profundidade é igual ao número de arestas (caminho mais curto)
+        return int(min_path_length)
     else:
         # -1 indica que o pacote vulnerável está isolado ou não faz parte da dependência principal
         return -1
@@ -41,6 +43,10 @@ def calculate_reachability_metrics(G: nx.DiGraph, vulnerability_report: List[Dic
     """
     print("Iniciando cálculo de alcance (reachability)...")
     
+    # É uma boa prática verificar se o grafo é acíclico
+    if not nx.is_directed_acyclic_graph(G):
+        print("AVISO: O grafo contém ciclos. O cálculo de profundidade pode ser menos significativo.")
+        
     for item in vulnerability_report:
         package_name = item['package_name']
         
@@ -48,6 +54,7 @@ def calculate_reachability_metrics(G: nx.DiGraph, vulnerability_report: List[Dic
         min_depth = get_shortest_path_to_vulnerable_node(G, package_name)
         
         # Armazenar o resultado no relatório
+        # O valor -1 significa "isolado" ou "inalcançável"
         item['min_dependency_depth'] = min_depth
 
     print("Cálculo de alcance concluído.")
