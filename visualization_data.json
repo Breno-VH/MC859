@@ -168,7 +168,7 @@
       "package": "starlite",
       "risk_score": 21.75158686097296,
       "health_score": 100,
-      "stars": 7625,
+      "stars": 7624,
       "contributors": 100,
       "days_since_push": 1,
       "open_issues": 259,
@@ -201,7 +201,7 @@
       "package": "langflow-base",
       "risk_score": 5.782537216049096,
       "health_score": 100,
-      "stars": 137524,
+      "stars": 137528,
       "contributors": 100,
       "days_since_push": 0,
       "open_issues": 869,
@@ -212,7 +212,7 @@
       "package": "qiskit-terra",
       "risk_score": 5.233268412549684,
       "health_score": 100,
-      "stars": 6654,
+      "stars": 6655,
       "contributors": 100,
       "days_since_push": 0,
       "open_issues": 1235,
@@ -324,6 +324,6 @@
   "metadata": {
     "total_vulnerable_packages": 65,
     "total_analyzed_repos": 10,
-    "timestamp": "2025-11-08T16:14:57.208353+00:00"
+    "timestamp": "2025-11-08T17:21:40.548383+00:00"
   }
 }

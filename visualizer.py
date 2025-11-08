@@ -48,7 +48,7 @@ def plot_degree_distribution(G):
         plt.grid(True, alpha=0.3)
 
         plt.tight_layout()
-        plt.savefig('degree_distribution.png', dpi=300, bbox_inches='tight')
+        plt.savefig('visualizations/degree_distribution.png', dpi=300, bbox_inches='tight')
         plt.close()
         print("✅ Saved: degree_distribution.png")
 
@@ -76,7 +76,7 @@ def plot_scc_distribution(G):
         plt.ylabel('Frequência (Número de CFSs)')
         plt.grid(True, which="both", ls="--", alpha=0.3)
         plt.tight_layout()
-        plt.savefig('scc_distribution.png', dpi=300, bbox_inches='tight')
+        plt.savefig('visualizations/scc_distribution.png', dpi=300, bbox_inches='tight')
         plt.close()
         print("✅ Saved: scc_distribution.png")
 
@@ -142,7 +142,7 @@ def plot_vulnerability_impact_bubble(vulnerability_report: List[Dict[str, Any]],
     ax.legend(handles=legend_elements, title='Severidade', loc='upper left', fontsize=10)
     
     plt.tight_layout()
-    plt.savefig('vulnerability_impact_bubble.png', dpi=300, bbox_inches='tight')
+    plt.savefig('visualizations/vulnerability_impact_bubble.png', dpi=300, bbox_inches='tight')
     plt.close()
     print("✅ Saved: vulnerability_impact_bubble.png")
 
@@ -213,7 +213,7 @@ def plot_health_vs_risk_scatter(project_risk_data: List[Dict[str, Any]]):
         ax.legend(handles=legend_elements, title='Severidade', loc='upper right', fontsize=10)
     
     plt.tight_layout()
-    plt.savefig('health_vs_risk_scatter.png', dpi=300, bbox_inches='tight')
+    plt.savefig('visualizations/health_vs_risk_scatter.png', dpi=300, bbox_inches='tight')
     plt.close()
     print("✅ Saved: health_vs_risk_scatter.png")
 
@@ -279,7 +279,7 @@ def plot_activity_timeline(project_risk_data: List[Dict[str, Any]], top_n: int =
     ax.legend(handles=legend_elements, loc='lower right', fontsize=9)
     
     plt.tight_layout()
-    plt.savefig('activity_timeline.png', dpi=300, bbox_inches='tight')
+    plt.savefig('visualizations/activity_timeline.png', dpi=300, bbox_inches='tight')
     plt.close()
     print("✅ Saved: activity_timeline.png")
 
@@ -345,7 +345,7 @@ def plot_health_components_radar(project_risk_data: List[Dict[str, Any]], packag
     ax.grid(True)
     
     plt.tight_layout()
-    plt.savefig('health_components_radar.png', dpi=300, bbox_inches='tight')
+    plt.savefig('visualizations/health_components_radar.png', dpi=300, bbox_inches='tight')
     plt.close()
     print("✅ Saved: health_components_radar.png")
 
@@ -391,7 +391,7 @@ def plot_risk_distribution_pie(vulnerability_report: List[Dict[str, Any]]):
                 fontsize=14, fontweight='bold', pad=20)
     
     plt.tight_layout()
-    plt.savefig('risk_distribution_pie.png', dpi=300, bbox_inches='tight')
+    plt.savefig('visualizations/risk_distribution_pie.png', dpi=300, bbox_inches='tight')
     plt.close()
     print("✅ Saved: risk_distribution_pie.png")
 
@@ -438,7 +438,7 @@ def plot_correlation_heatmap(project_risk_data: List[Dict[str, Any]]):
                 fontsize=14, fontweight='bold', pad=20)
     
     plt.tight_layout()
-    plt.savefig('correlation_heatmap.png', dpi=300, bbox_inches='tight')
+    plt.savefig('visualizations/correlation_heatmap.png', dpi=300, bbox_inches='tight')
     plt.close()
     print("✅ Saved: correlation_heatmap.png")
 
