@@ -6,6 +6,8 @@ import re
 import math
 import aiohttp
 import asyncio
+from datetime import datetime, timezone
+import json
 
 # CWE Mapping (keeping your original mapping)
 CWE_MAPPING = {
@@ -97,6 +99,84 @@ def get_maturity_score(dev_status: str) -> float:
         return 1.0
 
 
+def calculate_days_since(date_string: str) -> int:
+    """Calculate days since a given ISO date string"""
+    if not date_string or date_string == 'N/A':
+        return -1
+    
+    try:
+        date = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+        now = datetime.now(timezone.utc)
+        return (now - date).days
+    except:
+        return -1
+
+
+def calculate_maintenance_health_score(repo_data: Dict[str, Any]) -> float:
+    """
+    Calculate a comprehensive maintenance health score (0-100).
+    Higher is better (healthier project).
+    
+    Considers:
+    - Recent activity (commits, releases)
+    - Issue responsiveness
+    - Community size
+    - Project maturity
+    """
+    score = 50.0  # Base score
+    
+    # Recent activity (+30 points max)
+    days_since_push = repo_data.get('days_since_last_push', -1)
+    if days_since_push >= 0:
+        if days_since_push < 30:
+            score += 30
+        elif days_since_push < 90:
+            score += 20
+        elif days_since_push < 180:
+            score += 10
+        elif days_since_push < 365:
+            score += 5
+        # else: no points for old projects
+    
+    # Issue responsiveness (+20 points max)
+    open_issues = repo_data.get('open_issues', 0)
+    watchers = repo_data.get('watchers', 0)
+    if watchers > 0:
+        issue_ratio = open_issues / max(watchers, 1)
+        if issue_ratio < 0.1:
+            score += 20
+        elif issue_ratio < 0.5:
+            score += 10
+        elif issue_ratio < 1.0:
+            score += 5
+    
+    # Community size (+20 points max)
+    stars = repo_data.get('repo_stars', 0)
+    contributors = repo_data.get('repo_contributors', 0)
+    if stars > 10000 or contributors > 100:
+        score += 20
+    elif stars > 1000 or contributors > 50:
+        score += 15
+    elif stars > 100 or contributors > 10:
+        score += 10
+    elif stars > 10 or contributors > 5:
+        score += 5
+    
+    # Security features (+10 points)
+    if repo_data.get('has_security_policy', False):
+        score += 5
+    if repo_data.get('has_vulnerability_alerts', False):
+        score += 5
+    
+    # Penalties
+    if repo_data.get('archived', False):
+        score -= 50
+    if repo_data.get('disabled', False):
+        score -= 100
+    
+    return max(0, min(100, score))
+
+
 # --- ENHANCED GITHUB API IMPLEMENTATION ---
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -104,7 +184,7 @@ MAX_RETRIES = 3
 INITIAL_DELAY = 1.0
 
 class GitHubAPIClient:
-    """Enhanced GitHub API client with robust error handling and rate limiting"""
+    """Enhanced GitHub API client with comprehensive metrics collection"""
     
     def __init__(self, token: str = None):
         self.token = token or GITHUB_TOKEN
@@ -119,14 +199,10 @@ class GitHubAPIClient:
         return headers
     
     def _parse_repo_url(self, repo_url: str) -> Tuple[str, str] | None:
-        """
-        Parse GitHub URL to extract owner and repo name.
-        Handles various URL formats.
-        """
+        """Parse GitHub URL to extract owner and repo name."""
         if not repo_url or 'github.com' not in repo_url.lower():
             return None
         
-        # Clean URL
         cleaned = (repo_url
                    .replace('https://', '')
                    .replace('http://', '')
@@ -134,11 +210,9 @@ class GitHubAPIClient:
                    .replace('.git', '')
                    .strip('/'))
         
-        # Extract owner and repo using regex
         match = re.search(r'github\.com/([^/]+)/([^/]+)', cleaned, re.IGNORECASE)
         if match:
             owner, repo = match.groups()
-            # Remove any trailing parameters or fragments
             repo = repo.split('?')[0].split('#')[0]
             return owner, repo
         
@@ -146,16 +220,13 @@ class GitHubAPIClient:
     
     async def _fetch_with_retry(self, session: aiohttp.ClientSession, url: str, 
                                 package_name: str = None) -> Dict[str, Any] | None:
-        """
-        Fetch URL with exponential backoff retry logic.
-        """
+        """Fetch URL with exponential backoff retry logic."""
         delay = INITIAL_DELAY
         
         for attempt in range(MAX_RETRIES):
             try:
                 async with session.get(url, headers=self._get_headers(), timeout=aiohttp.ClientTimeout(total=15)) as response:
                     
-                    # Update rate limit info
                     self.rate_limit_remaining = response.headers.get('X-RateLimit-Remaining')
                     self.rate_limit_reset = response.headers.get('X-RateLimit-Reset')
                     
@@ -168,7 +239,6 @@ class GitHubAPIClient:
                         return None
                     
                     elif response.status == 403:
-                        # Rate limit hit
                         if self.rate_limit_remaining == '0':
                             print(f"    ⚠️  Rate limit exceeded. Reset at: {self.rate_limit_reset}")
                             if attempt < MAX_RETRIES - 1:
@@ -183,9 +253,6 @@ class GitHubAPIClient:
                         return None
                     
                     else:
-                        error_text = await response.text()
-                        print(f"    ⚠️  HTTP {response.status} for {url}: {error_text[:100]}")
-                        
                         if attempt < MAX_RETRIES - 1:
                             await asyncio.sleep(delay)
                             delay *= 2
@@ -193,7 +260,6 @@ class GitHubAPIClient:
                             return None
                         
             except asyncio.TimeoutError:
-                print(f"    ⏱️  Timeout for {url} (attempt {attempt + 1}/{MAX_RETRIES})")
                 if attempt < MAX_RETRIES - 1:
                     await asyncio.sleep(delay)
                     delay *= 2
@@ -201,7 +267,6 @@ class GitHubAPIClient:
                     return None
                     
             except aiohttp.ClientError as e:
-                print(f"    ⚠️  Connection error for {url}: {e}")
                 if attempt < MAX_RETRIES - 1:
                     await asyncio.sleep(delay)
                     delay *= 2
@@ -209,7 +274,6 @@ class GitHubAPIClient:
                     return None
             
             except Exception as e:
-                print(f"    ❌ Unexpected error for {url}: {e}")
                 return None
         
         return None
@@ -217,14 +281,19 @@ class GitHubAPIClient:
     async def fetch_repo_metrics(self, session: aiohttp.ClientSession, 
                                  repo_url: str, package_name: str) -> Dict[str, Any]:
         """
-        Fetch repository metrics (stars, forks, contributors) from GitHub API.
-        Returns dict with metrics or zeros if fetch fails.
+        Fetch comprehensive repository metrics from GitHub API.
+        
+        Returns dict with:
+        - Basic metrics: stars, forks, contributors, watchers
+        - Activity metrics: last push, last release, open issues
+        - Health indicators: archived, disabled, security features
+        - Maintenance score: calculated health metric
         """
         parsed = self._parse_repo_url(repo_url)
         
         if not parsed:
             print(f"    ⚠️  [{package_name}] Invalid or non-GitHub URL: {repo_url}")
-            return {'repo_stars': 0, 'repo_contributors': 0, 'repo_forks': 0}
+            return self._empty_metrics()
         
         owner, repo = parsed
         repo_endpoint = f"https://api.github.com/repos/{owner}/{repo}"
@@ -235,31 +304,129 @@ class GitHubAPIClient:
         repo_data = await self._fetch_with_retry(session, repo_endpoint, package_name)
         
         if not repo_data:
-            return {'repo_stars': 0, 'repo_contributors': 0, 'repo_forks': 0}
+            return self._empty_metrics()
         
+        # Basic metrics
         stars = repo_data.get('stargazers_count', 0)
         forks = repo_data.get('forks_count', 0)
+        watchers = repo_data.get('watchers_count', 0)
+        open_issues = repo_data.get('open_issues_count', 0)
         
-        # Fetch contributors (separate endpoint)
+        # Activity metrics
+        pushed_at = repo_data.get('pushed_at', 'N/A')
+        created_at = repo_data.get('created_at', 'N/A')
+        updated_at = repo_data.get('updated_at', 'N/A')
+        
+        days_since_push = calculate_days_since(pushed_at)
+        days_since_created = calculate_days_since(created_at)
+        
+        # Health indicators
+        archived = repo_data.get('archived', False)
+        disabled = repo_data.get('disabled', False)
+        has_issues = repo_data.get('has_issues', False)
+        has_wiki = repo_data.get('has_wiki', False)
+        has_pages = repo_data.get('has_pages', False)
+        
+        # License
+        license_info = repo_data.get('license')
+        license_name = license_info.get('name', 'N/A') if license_info else 'N/A'
+        
+        # Fetch contributors
         contributors_endpoint = f"{repo_endpoint}/contributors?per_page=100"
         contributors_data = await self._fetch_with_retry(session, contributors_endpoint, package_name)
         
         contributors_count = 0
         if contributors_data and isinstance(contributors_data, list):
             contributors_count = len(contributors_data)
-            # If there are exactly 100, there might be more (pagination needed)
-            if contributors_count == 100:
-                print(f"    ℹ️  [{package_name}] May have 100+ contributors (pagination limit)")
         
-        print(f"    ✅ [{package_name}] ⭐ {stars} | 🍴 {forks} | 👥 {contributors_count}")
+        # Fetch latest release (if any)
+        releases_endpoint = f"{repo_endpoint}/releases/latest"
+        release_data = await self._fetch_with_retry(session, releases_endpoint, package_name)
         
-        return {
+        latest_release_date = 'N/A'
+        days_since_release = -1
+        if release_data and not isinstance(release_data, list):
+            latest_release_date = release_data.get('published_at', 'N/A')
+            days_since_release = calculate_days_since(latest_release_date)
+        
+        # Check for security policy (community standards)
+        security_endpoint = f"{repo_endpoint}/community/profile"
+        security_data = await self._fetch_with_retry(session, security_endpoint, package_name)
+        
+        has_security_policy = False
+        if security_data and 'files' in security_data:
+            has_security_policy = security_data['files'].get('security', None) is not None
+        
+        # Build comprehensive metrics dict
+        metrics = {
             'repo_stars': stars,
             'repo_contributors': contributors_count,
             'repo_forks': forks,
-            'archived': repo_data.get('archived', False),
-            'disabled': repo_data.get('disabled', False),
-            'pushed_at': repo_data.get('pushed_at', 'N/A')
+            'watchers': watchers,
+            'open_issues': open_issues,
+            'archived': archived,
+            'disabled': disabled,
+            'pushed_at': pushed_at,
+            'created_at': created_at,
+            'updated_at': updated_at,
+            'days_since_last_push': days_since_push,
+            'days_since_created': days_since_created,
+            'days_since_release': days_since_release,
+            'latest_release_date': latest_release_date,
+            'license': license_name,
+            'has_issues': has_issues,
+            'has_wiki': has_wiki,
+            'has_pages': has_pages,
+            'has_security_policy': has_security_policy,
+            'has_vulnerability_alerts': has_issues,  # Proxy metric
+        }
+        
+        # Calculate maintenance health score
+        metrics['maintenance_health_score'] = calculate_maintenance_health_score(metrics)
+        
+        # Display summary
+        status_icons = []
+        if archived:
+            status_icons.append("📦 ARCHIVED")
+        if disabled:
+            status_icons.append("🚫 DISABLED")
+        if days_since_push < 30:
+            status_icons.append("✅ Active")
+        elif days_since_push < 180:
+            status_icons.append("⚠️  Slow")
+        else:
+            status_icons.append("❌ Stale")
+        
+        status = " | ".join(status_icons) if status_icons else ""
+        
+        print(f"    ✅ [{package_name}] ⭐ {stars} | 🍴 {forks} | 👥 {contributors_count} | 🏥 {metrics['maintenance_health_score']:.0f}/100 | {status}")
+        
+        return metrics
+    
+    def _empty_metrics(self) -> Dict[str, Any]:
+        """Return empty metrics dict with default values"""
+        return {
+            'repo_stars': 0,
+            'repo_contributors': 0,
+            'repo_forks': 0,
+            'watchers': 0,
+            'open_issues': 0,
+            'archived': False,
+            'disabled': False,
+            'pushed_at': 'N/A',
+            'created_at': 'N/A',
+            'updated_at': 'N/A',
+            'days_since_last_push': -1,
+            'days_since_created': -1,
+            'days_since_release': -1,
+            'latest_release_date': 'N/A',
+            'license': 'N/A',
+            'has_issues': False,
+            'has_wiki': False,
+            'has_pages': False,
+            'has_security_policy': False,
+            'has_vulnerability_alerts': False,
+            'maintenance_health_score': 0,
         }
 
 
@@ -267,19 +434,18 @@ async def extract_project_risk_data(G: nx.DiGraph,
                                    top_vulnerable_packages: List[Dict[str, Any]], 
                                    count: int = 10) -> List[Dict[str, Any]]:
     """
-    Orchestrates fetching of repository maintenance metrics (Stars, Contributors)
-    and calculates weighted Project Risk (Maintenance) score.
+    Orchestrates fetching of comprehensive repository metrics
+    and calculates enhanced Project Risk (Maintenance) score.
     """
     
     print(f"\n{'='*80}")
-    print(f"🔍 GITHUB API: Fetching repository metrics for top {count} packages")
+    print(f"🔍 GITHUB API: Fetching comprehensive repository metrics for top {count} packages")
     print(f"{'='*80}\n")
     
-    # Check for GitHub token
     token_status = "✅ Authenticated" if GITHUB_TOKEN else "⚠️  Unauthenticated (60 req/hour limit)"
     print(f"Token Status: {token_status}\n")
     
-    # 1. Prepare unique packages
+    # Prepare unique packages
     unique_packages = {}
     for pkg in top_vulnerable_packages:
         name = pkg['package_name']
@@ -295,14 +461,12 @@ async def extract_project_risk_data(G: nx.DiGraph,
                 'dev_status': dev_status,
                 'max_security_risk': pkg.get('max_risk_score', 0),
                 'weighted_risk_score': pkg.get('weighted_risk_score', 0),
-                'repo_stars': 0,
-                'repo_contributors': 0,
-                'repo_forks': 0,
+                'risk_level': pkg.get('risk_level', 'UNKNOWN'),
             }
 
     packages_list = list(unique_packages.values())[:count]
     
-    # 2. Asynchronous GitHub API calls
+    # Asynchronous GitHub API calls
     client = GitHubAPIClient()
     
     async with aiohttp.ClientSession() as session:
@@ -322,52 +486,119 @@ async def extract_project_risk_data(G: nx.DiGraph,
                 result = await task
                 results.append((pkg_data, result))
             else:
-                results.append((pkg_data, {'repo_stars': 0, 'repo_contributors': 0, 'repo_forks': 0}))
+                results.append((pkg_data, client._empty_metrics()))
         
-        # Small delay between batches to be respectful to API
         await asyncio.sleep(0.5)
     
-    # 3. Process results and calculate final risk
+    # Process results and calculate final risk
     final_project_risk_data = []
     
     print(f"\n{'='*80}")
-    print("📊 Calculating Project Risk Scores")
+    print("📊 Calculating Enhanced Project Risk Scores")
     print(f"{'='*80}\n")
     
     for pkg_data, api_data in results:
         
-        # Update package data with real metrics
+        # Update package data with all metrics
         pkg_data.update(api_data)
         
-        stars = pkg_data['repo_stars']
-        contributors = pkg_data['repo_contributors']
-        
-        # --- PROJECT RISK SCORE CALCULATION ---
-        
+        # Extract key metrics
         in_degree = pkg_data['in_degree']
         max_security_risk = pkg_data['max_security_risk']
         dev_status = pkg_data['dev_status']
+        maintenance_health = pkg_data['maintenance_health_score']
         
-        # Maturity Factor (higher maturity = higher potential impact)
+        # --- ENHANCED PROJECT RISK SCORE CALCULATION ---
+        
+        # Maturity Factor
         maturity_score = get_maturity_score(dev_status)
         
-        # Influence Factor (higher in_degree = wider impact reach)
+        # Influence Factor
         influence_factor = math.log(in_degree + 2)
         
-        # Health/Maintenance Factor (higher health = lower risk of slow fixes)
-        health_index = stars + contributors
-        health_factor = math.log(health_index + 10) if health_index > 0 else 1.0
+        # Health Factor (now using comprehensive health score)
+        # Convert 0-100 health score to a factor (higher health = lower risk)
+        health_factor = math.log((maintenance_health / 10) + 10)
         
-        # Final Formula: (Security Risk * Maturity * Influence) / Health
-        weighted_score = (max_security_risk * maturity_score * influence_factor) / health_factor
+        # Additional penalty factors
+        penalty_multiplier = 1.0
+        if pkg_data.get('archived', False):
+            penalty_multiplier *= 2.0  # Double risk if archived
+        if pkg_data.get('days_since_last_push', 0) > 365:
+            penalty_multiplier *= 1.5  # 50% more risk if no activity in a year
+        
+        # Final Formula: (Security * Maturity * Influence * Penalties) / Health
+        weighted_score = (max_security_risk * maturity_score * influence_factor * penalty_multiplier) / health_factor
         
         pkg_data['weighted_score'] = weighted_score
         
         final_project_risk_data.append(pkg_data)
     
-    # 4. Sort by final score
+    # Sort by final score
     final_project_risk_data.sort(key=lambda x: x['weighted_score'], reverse=True)
     
-    print(f"\n✅ Successfully analyzed {len(final_project_risk_data)} packages\n")
+    print(f"\n✅ Successfully analyzed {len(final_project_risk_data)} packages with enhanced metrics\n")
     
     return final_project_risk_data[:count]
+
+
+def export_visualization_data(vulnerability_report: List[Dict[str, Any]], 
+                              project_risk_data: List[Dict[str, Any]],
+                              output_file: str = "visualization_data.json"):
+    """
+    Export data in a format optimized for visualization.
+    Creates a JSON file with all metrics needed for charts.
+    """
+    export_data = {
+        'vulnerability_summary': [],
+        'project_risk_summary': [],
+        'health_vs_risk': [],
+        'severity_distribution': {'CRITICAL': 0, 'HIGH': 0, 'MODERATE': 0, 'LOW': 0},
+        'metadata': {
+            'total_vulnerable_packages': len(vulnerability_report),
+            'total_analyzed_repos': len(project_risk_data),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }
+    }
+    
+    # Vulnerability summary
+    for item in vulnerability_report[:20]:  # Top 20
+        export_data['vulnerability_summary'].append({
+            'package': item['package_name'],
+            'risk_level': item['risk_level'],
+            'risk_score': item['weighted_risk_score'],
+            'dependents': item['in_degree_dependents'],
+            'depth': item.get('min_dependency_depth', -1)
+        })
+        
+        # Count severities
+        export_data['severity_distribution'][item['risk_level']] += 1
+    
+    # Project risk summary with health metrics
+    for item in project_risk_data:
+        export_data['project_risk_summary'].append({
+            'package': item['package_name'],
+            'risk_score': item['weighted_score'],
+            'health_score': item.get('maintenance_health_score', 0),
+            'stars': item.get('repo_stars', 0),
+            'contributors': item.get('repo_contributors', 0),
+            'days_since_push': item.get('days_since_last_push', -1),
+            'open_issues': item.get('open_issues', 0),
+            'archived': item.get('archived', False),
+            'severity': item.get('risk_level', 'UNKNOWN')
+        })
+        
+        # Health vs Risk correlation data
+        export_data['health_vs_risk'].append({
+            'package': item['package_name'],
+            'health': item.get('maintenance_health_score', 0),
+            'risk': item['weighted_score'],
+            'severity': item.get('risk_level', 'UNKNOWN')
+        })
+    
+    # Write to JSON file
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(export_data, f, indent=2, ensure_ascii=False)
+    
+    print(f"\n📊 Visualization data exported to: {output_file}")
+    return export_data

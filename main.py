@@ -279,25 +279,111 @@ def print_report(vulnerability_report: List[Dict[str, Any]], project_risk_data: 
     print("-" * 70)
     print("\n")
 
-    # 3. PROJECT RISK (MAINTENANCE) ANALYSIS - WITH REPOSITORY DATA
-    print("RISCO DE PROJETO (MANUTENÇÃO) - TOP PACOTES:")
-    print("-" * 120)
-    header_proj = f"{'PACOTE':<30} | {'RISCO PROJ.':<15} | {'DEPENDENTES':<12} | {'ESTRELAS':<12} | {'CONTRIB.':<12} | {'STATUS DEV':<25}"
+    # 3. ENHANCED PROJECT RISK (MAINTENANCE) ANALYSIS - WITH COMPREHENSIVE METRICS
+    print("RISCO DE PROJETO (MANUTENÇÃO) - TOP PACOTES COM MÉTRICAS DETALHADAS:")
+    print("=" * 160)
+    header_proj = f"{'PACOTE':<25} | {'RISCO':<8} | {'DEP':<5} | {'⭐':<7} | {'👥':<5} | {'SAÚDE':<7} | {'ÚLT.PUSH':<10} | {'ÚLT.REL':<10} | {'ISSUES':<7} | {'STATUS':<15}"
     print(header_proj)
-    print("-" * 120)
+    print("=" * 160)
+    
     for item in project_risk_data:
         stars = item.get('repo_stars', 0)
         contributors = item.get('repo_contributors', 0)
+        health = item.get('maintenance_health_score', 0)
+        days_push = item.get('days_since_last_push', -1)
+        days_release = item.get('days_since_release', -1)
+        open_issues = item.get('open_issues', 0)
+        archived = item.get('archived', False)
+        
+        # Format days as human-readable
+        push_str = f"{days_push}d" if days_push >= 0 else "N/A"
+        if days_push > 365:
+            push_str = f"{days_push//365}y"
+        
+        release_str = f"{days_release}d" if days_release >= 0 else "N/A"
+        if days_release > 365:
+            release_str = f"{days_release//365}y"
+        
+        # Status indicators
+        status = []
+        if archived:
+            status.append("📦ARCH")
+        elif days_push < 30:
+            status.append("✅Active")
+        elif days_push < 180:
+            status.append("⚠️Slow")
+        else:
+            status.append("❌Stale")
+        
+        status_str = " ".join(status)[:15]
         
         print(
-            f"{item['package_name']:<30} | "
-            f"{item['weighted_score']:.2f}{'':<15} | "
-            f"{item['in_degree']:<12} | "
-            f"{stars:<12} | " 
-            f"{contributors:<12} | " 
-            f"{item['dev_status'][:25]:<25}"
+            f"{item['package_name']:<25} | "
+            f"{item['weighted_score']:>6.2f} | "
+            f"{item['in_degree']:>5} | "
+            f"{stars:>7} | "
+            f"{contributors:>5} | "
+            f"{health:>5.0f}/100 | "
+            f"{push_str:>10} | "
+            f"{release_str:>10} | "
+            f"{open_issues:>7} | "
+            f"{status_str:<15}"
         )
-    print("-" * 120)
+    
+    print("=" * 160)
+    print("\nLegenda:")
+    print("  RISCO: Score de risco de manutenção (maior = maior risco)")
+    print("  DEP: Número de pacotes dependentes")
+    print("  ⭐: Estrelas no GitHub")
+    print("  👥: Contribuidores")
+    print("  SAÚDE: Score de saúde da manutenção (0-100, maior = melhor)")
+    print("  ÚLT.PUSH: Dias desde último commit")
+    print("  ÚLT.REL: Dias desde último release")
+    print("  ISSUES: Issues abertas")
+    print("  STATUS: ✅Active (<30d) | ⚠️Slow (<180d) | ❌Stale (>180d) | 📦ARCH (arquivado)")
+    print()
+    
+    # 4. DETAILED HEALTH ANALYSIS
+    print("\nANÁLISE DETALHADA DE SAÚDE DOS REPOSITÓRIOS:")
+    print("=" * 160)
+    
+    for item in project_risk_data[:5]:  # Top 5 most at-risk
+        print(f"\n📦 {item['package_name']}")
+        print("-" * 160)
+        
+        health = item.get('maintenance_health_score', 0)
+        health_indicator = "🟢" if health > 70 else "🟡" if health > 40 else "🔴"
+        
+        print(f"  {health_indicator} Saúde Geral: {health:.0f}/100")
+        print(f"  ⭐ Popularidade: {item.get('repo_stars', 0):,} estrelas | {item.get('repo_forks', 0):,} forks | {item.get('watchers', 0):,} watchers")
+        print(f"  👥 Comunidade: {item.get('repo_contributors', 0)} contribuidores")
+        
+        days_push = item.get('days_since_last_push', -1)
+        if days_push >= 0:
+            activity_status = "✅ Muito ativo" if days_push < 7 else "🟢 Ativo" if days_push < 30 else "🟡 Moderado" if days_push < 180 else "🔴 Inativo"
+            print(f"  🕐 Última Atividade: {days_push} dias atrás ({activity_status})")
+        
+        days_release = item.get('days_since_release', -1)
+        if days_release >= 0:
+            print(f"  📦 Último Release: {days_release} dias atrás")
+        
+        license_name = item.get('license', 'N/A')
+        print(f"  📜 Licença: {license_name}")
+        
+        if item.get('has_security_policy', False):
+            print(f"  🛡️  Possui política de segurança")
+        
+        if item.get('archived', False):
+            print(f"  ⚠️  ATENÇÃO: Repositório ARQUIVADO - não receberá mais atualizações!")
+        
+        open_issues = item.get('open_issues', 0)
+        watchers = item.get('watchers', 0)
+        if watchers > 0:
+            issue_ratio = open_issues / watchers
+            issue_status = "🟢 Bom" if issue_ratio < 0.1 else "🟡 Moderado" if issue_ratio < 0.5 else "🔴 Alto"
+            print(f"  🐛 Issues Abertas: {open_issues} (ratio: {issue_ratio:.2f} - {issue_status})")
+    
+    print("=" * 160)
 
 
 def generate_cwe_histogram(cwe_classification: List[Tuple[str, int]]):
@@ -375,7 +461,19 @@ def main():
     print_report(vulnerability_report, project_risk_data, cwe_classification)
     
     # 7. Generate Data Visualization
-    generate_cwe_histogram(cwe_classification) 
+    generate_cwe_histogram(cwe_classification)
+    
+    # 8. Generate Comprehensive Visualizations
+    print("\n" + "="*80)
+    print("GENERATING ADVANCED VISUALIZATIONS")
+    print("="*80)
+    
+    from visualizer import generate_all_visualizations
+    generate_all_visualizations(G, vulnerability_report, project_risk_data)
+    
+    # 9. Export data for external visualization tools
+    from analysis_utils import export_visualization_data
+    export_visualization_data(vulnerability_report, project_risk_data)
 
 if __name__ == "__main__":
     main()
