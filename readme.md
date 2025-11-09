@@ -24,16 +24,23 @@ cd pypi-vulnerability-analyzer
 ```
 
 ### 2. python3 -m venv venv
+```bash
 source venv/bin/activate       # on Linux/Mac
 venv\Scripts\activate          # on Windows
+```
 
-
-### 3. pip install -r requirements.txt
+### 3. Install requirements
+```bash
+pip install -r requirements.txt
+```
 
 ### 4. To avoid GitHub API rate limits, you must provide a personal access token.
+```bash
 export GITHUB_TOKEN="your_token_here"       # Linux/Mac
 setx GITHUB_TOKEN "your_token_here"         # Windows (persistent)
-
+```
 
 ### 5. Run the project
+```bash
 python main.py
+```
