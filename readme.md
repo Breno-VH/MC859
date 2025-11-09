@@ -23,8 +23,9 @@ git clone https://github.com/your-username/pypi-vulnerability-analyzer.git
 cd pypi-vulnerability-analyzer
 ```
 
-### 2. python3 -m venv venv
+### 2. Activate virtual env
 ```bash
+python3 -m venv venv
 source venv/bin/activate       # on Linux/Mac
 venv\Scripts\activate          # on Windows
 ```
