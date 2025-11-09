@@ -46,6 +46,8 @@ CWE_MAPPING = {
     "CWE-362": "Race Condition",
     "CWE-476": "NULL Pointer Dereference",
     "CWE-754": "Improper Check for Unusual or Exceptional Conditions",
+    "CWE-863": "Incorrect Authorization",
+    "CWE-798": "Use of Hard-coded Credentials",
 }
 
 def get_cwe_category(cwe_id: str) -> str:
@@ -458,6 +460,7 @@ async def extract_project_risk_data(G: nx.DiGraph,
                 'package_name': name,
                 'repo_url': repo_url,
                 'in_degree': pkg.get('in_degree_dependents', 0),
+                'out_degree': pkg.get('out_degree_dependents', 0),
                 'dev_status': dev_status,
                 'max_security_risk': pkg.get('max_risk_score', 0),
                 'weighted_risk_score': pkg.get('weighted_risk_score', 0),
@@ -504,6 +507,7 @@ async def extract_project_risk_data(G: nx.DiGraph,
         
         # Extract key metrics
         in_degree = pkg_data['in_degree']
+        out_degree = pkg_data['out_degree']
         max_security_risk = pkg_data['max_security_risk']
         dev_status = pkg_data['dev_status']
         maintenance_health = pkg_data['maintenance_health_score']
@@ -514,7 +518,7 @@ async def extract_project_risk_data(G: nx.DiGraph,
         maturity_score = get_maturity_score(dev_status)
         
         # Influence Factor
-        influence_factor = math.log(in_degree + 2)
+        influence_factor = math.log(out_degree + 2)
         
         # Health Factor (now using comprehensive health score)
         # Convert 0-100 health score to a factor (higher health = lower risk)

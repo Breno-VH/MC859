@@ -1,329 +1,329 @@
 {
   "vulnerability_summary": [
     {
-      "package": "sickrage",
-      "risk_level": "CRITICAL",
-      "risk_score": 56.23475382979799,
-      "dependents": 105,
-      "depth": 1
-    },
-    {
-      "package": "pandasai",
-      "risk_level": "CRITICAL",
-      "risk_score": 39.27827300200522,
-      "dependents": 47,
-      "depth": 1
-    },
-    {
-      "package": "langflow-base",
+      "package": "future",
       "risk_level": "HIGH",
-      "risk_score": 38.40930106817051,
-      "dependents": 74,
-      "depth": 1
+      "risk_score": 50.3033476111609,
+      "dependents": 134,
+      "depth": 0
     },
     {
       "package": "plone.app.contenttypes",
       "risk_level": "CRITICAL",
-      "risk_score": 37.01562118716424,
-      "dependents": 41,
+      "risk_score": 44.686269665968865,
+      "dependents": 63,
       "depth": 2
     },
     {
-      "package": "plone-app-contenttypes",
-      "risk_level": "CRITICAL",
-      "risk_score": 37.01562118716424,
-      "dependents": 41,
-      "depth": 2
-    },
-    {
-      "package": "keystone",
+      "package": "ecdsa",
       "risk_level": "HIGH",
-      "risk_score": 31.422618401604176,
-      "dependents": 47,
+      "risk_score": 26.627416997969522,
+      "dependents": 32,
       "depth": 1
+    },
+    {
+      "package": "tensorflow-gpu",
+      "risk_level": "HIGH",
+      "risk_score": 19.491933384829668,
+      "dependents": 15,
+      "depth": 0
+    },
+    {
+      "package": "sqlitedict",
+      "risk_level": "HIGH",
+      "risk_score": 16.0,
+      "dependents": 9,
+      "depth": 0
+    },
+    {
+      "package": "pycrypto",
+      "risk_level": "CRITICAL",
+      "risk_score": 13.660254037844386,
+      "dependents": 3,
+      "depth": 0
+    },
+    {
+      "package": "pysha3",
+      "risk_level": "CRITICAL",
+      "risk_score": 13.660254037844386,
+      "dependents": 3,
+      "depth": 0
+    },
+    {
+      "package": "horovod",
+      "risk_level": "CRITICAL",
+      "risk_score": 12.071067811865476,
+      "dependents": 2,
+      "depth": 0
+    },
+    {
+      "package": "js2py",
+      "risk_level": "HIGH",
+      "risk_score": 12.0,
+      "dependents": 4,
+      "depth": 1
+    },
+    {
+      "package": "youtube-dl",
+      "risk_level": "HIGH",
+      "risk_score": 12.0,
+      "dependents": 4,
+      "depth": 0
     },
     {
       "package": "qiskit-terra",
       "risk_level": "CRITICAL",
-      "risk_score": 27.9128784747792,
-      "dependents": 21,
-      "depth": 1
-    },
-    {
-      "package": "fschat",
-      "risk_level": "HIGH",
-      "risk_score": 25.166010488516726,
-      "dependents": 28,
+      "risk_score": 10.0,
+      "dependents": 1,
       "depth": 1
     },
     {
       "package": "starlite",
       "risk_level": "HIGH",
-      "risk_score": 23.595917942265423,
-      "dependents": 24,
-      "depth": 1
-    },
-    {
-      "package": "mindsdb",
-      "risk_level": "LOW",
-      "risk_score": 17.401219466856727,
-      "dependents": 269,
-      "depth": 1
-    },
-    {
-      "package": "neutron",
-      "risk_level": "MODERATE",
-      "risk_score": 16.560219778561034,
-      "dependents": 53,
-      "depth": 1
-    },
-    {
-      "package": "h2o",
-      "risk_level": "CRITICAL",
-      "risk_score": 16.18033988749895,
-      "dependents": 5,
-      "depth": 1
-    },
-    {
-      "package": "buildbot",
-      "risk_level": "MODERATE",
-      "risk_score": 15.416407864998739,
-      "dependents": 45,
+      "risk_score": 9.65685424949238,
+      "dependents": 2,
       "depth": 1
     },
     {
       "package": "dgl",
       "risk_level": "HIGH",
-      "risk_score": 15.313708498984761,
-      "dependents": 8,
+      "risk_score": 9.65685424949238,
+      "dependents": 2,
+      "depth": 1
+    },
+    {
+      "package": "fschat",
+      "risk_level": "HIGH",
+      "risk_score": 9.65685424949238,
+      "dependents": 2,
       "depth": 1
     },
     {
       "package": "pycel",
       "risk_level": "HIGH",
-      "risk_score": 12.94427190999916,
-      "dependents": 5,
+      "risk_score": 8.0,
+      "dependents": 1,
       "depth": 1
     },
     {
-      "package": "aim",
-      "risk_level": "MODERATE",
-      "risk_score": 12.0,
-      "dependents": 25,
-      "depth": 1
-    },
-    {
-      "package": "js2py",
+      "package": "Elixir",
       "risk_level": "HIGH",
-      "risk_score": 10.928203230275509,
-      "dependents": 3,
-      "depth": 1
-    },
-    {
-      "package": "ecdsa",
-      "risk_level": "HIGH",
-      "risk_score": 10.928203230275509,
-      "dependents": 3,
-      "depth": 1
-    },
-    {
-      "package": "pypdf2",
-      "risk_level": "MODERATE",
-      "risk_score": 9.21110255092798,
-      "dependents": 13,
-      "depth": 1
+      "risk_score": 8.0,
+      "dependents": 1,
+      "depth": 0
     },
     {
       "package": "PyPDF2",
       "risk_level": "MODERATE",
-      "risk_score": 9.21110255092798,
-      "dependents": 13,
+      "risk_score": 6.898979485566356,
+      "dependents": 6,
       "depth": 1
+    },
+    {
+      "package": "py",
+      "risk_level": "LOW",
+      "risk_score": 6.385164807134504,
+      "dependents": 29,
+      "depth": 0
+    },
+    {
+      "package": "pypdf2",
+      "risk_level": "MODERATE",
+      "risk_score": 6.0,
+      "dependents": 4,
+      "depth": 1
+    },
+    {
+      "package": "text-generation",
+      "risk_level": "MODERATE",
+      "risk_score": 6.0,
+      "dependents": 4,
+      "depth": 2
     }
   ],
   "project_risk_summary": [
     {
+      "package": "pycrypto",
+      "risk_score": 19.698715127789516,
+      "health_score": 40.0,
+      "stars": 2467,
+      "contributors": 23,
+      "days_since_push": 1383,
+      "open_issues": 212,
+      "archived": true,
+      "severity": "CRITICAL"
+    },
+    {
+      "package": "sqlitedict",
+      "risk_score": 7.062267400999147,
+      "health_score": 90.0,
+      "stars": 1230,
+      "contributors": 32,
+      "days_since_push": 1068,
+      "open_issues": 38,
+      "archived": false,
+      "severity": "HIGH"
+    },
+    {
       "package": "plone.app.contenttypes",
-      "risk_score": 31.38798607686876,
+      "risk_score": 5.78445532899398,
       "health_score": 100,
       "stars": 14,
       "contributors": 90,
-      "days_since_push": 4,
-      "open_issues": 58,
+      "days_since_push": 0,
+      "open_issues": 59,
       "archived": false,
       "severity": "CRITICAL"
     },
     {
-      "package": "plone-app-contenttypes",
-      "risk_score": 31.38798607686876,
+      "package": "tensorflow-gpu",
+      "risk_score": 4.627564263195183,
       "health_score": 100,
-      "stars": 14,
-      "contributors": 90,
-      "days_since_push": 4,
-      "open_issues": 58,
-      "archived": false,
-      "severity": "CRITICAL"
-    },
-    {
-      "package": "starlite",
-      "risk_score": 21.75158686097296,
-      "health_score": 100,
-      "stars": 7625,
-      "contributors": 100,
-      "days_since_push": 1,
-      "open_issues": 259,
-      "archived": false,
-      "severity": "HIGH"
-    },
-    {
-      "package": "sickrage",
-      "risk_score": 12.011298856723194,
-      "health_score": 85.0,
-      "stars": 1537,
-      "contributors": 100,
-      "days_since_push": 886,
-      "open_issues": 0,
-      "archived": false,
-      "severity": "CRITICAL"
-    },
-    {
-      "package": "pandasai",
-      "risk_score": 6.495607655709434,
-      "health_score": 100,
-      "stars": 22531,
-      "contributors": 100,
-      "days_since_push": 11,
-      "open_issues": 12,
-      "archived": false,
-      "severity": "CRITICAL"
-    },
-    {
-      "package": "langflow-base",
-      "risk_score": 5.782537216049096,
-      "health_score": 100,
-      "stars": 137529,
+      "stars": 192366,
       "contributors": 100,
       "days_since_push": 0,
-      "open_issues": 869,
+      "open_issues": 2189,
       "archived": false,
       "severity": "HIGH"
     },
     {
-      "package": "qiskit-terra",
-      "risk_score": 5.233268412549684,
+      "package": "pysha3",
+      "risk_score": 4.627564263195183,
       "health_score": 100,
-      "stars": 6655,
-      "contributors": 100,
-      "days_since_push": 0,
-      "open_issues": 1235,
+      "stars": 628,
+      "contributors": 36,
+      "days_since_push": 32,
+      "open_issues": 15,
       "archived": false,
       "severity": "CRITICAL"
     },
     {
-      "package": "keystone",
-      "risk_score": 5.1964861245675475,
+      "package": "horovod",
+      "risk_score": 4.627564263195183,
       "health_score": 100,
-      "stars": 706,
+      "stars": 14626,
       "contributors": 100,
-      "days_since_push": 3,
+      "days_since_push": 6,
+      "open_issues": 406,
+      "archived": false,
+      "severity": "CRITICAL"
+    },
+    {
+      "package": "youtube-dl",
+      "risk_score": 4.627564263195183,
+      "health_score": 100,
+      "stars": 39,
+      "contributors": 100,
+      "days_since_push": 4,
       "open_issues": 0,
       "archived": false,
       "severity": "HIGH"
     },
     {
-      "package": "fschat",
-      "risk_score": 4.541390312729302,
-      "health_score": 100,
-      "stars": 39243,
-      "contributors": 100,
-      "days_since_push": 159,
-      "open_issues": 958,
+      "package": "js2py",
+      "risk_score": 1.4124534801998294,
+      "health_score": 90.0,
+      "stars": 2560,
+      "contributors": 20,
+      "days_since_push": 552,
+      "open_issues": 159,
       "archived": false,
       "severity": "HIGH"
     },
     {
-      "package": "mindsdb",
-      "risk_score": 2.4329692908744054,
-      "health_score": 0,
-      "stars": 0,
-      "contributors": 0,
-      "days_since_push": -1,
-      "open_issues": 0,
+      "package": "future",
+      "risk_score": 0.941635653466553,
+      "health_score": 90.0,
+      "stars": 1183,
+      "contributors": 100,
+      "days_since_push": 173,
+      "open_issues": 189,
       "archived": false,
-      "severity": "LOW"
+      "severity": "HIGH"
+    },
+    {
+      "package": "ecdsa",
+      "risk_score": 0.9255128526390367,
+      "health_score": 100,
+      "stars": 955,
+      "contributors": 45,
+      "days_since_push": 62,
+      "open_issues": 17,
+      "archived": false,
+      "severity": "HIGH"
     }
   ],
   "health_vs_risk": [
     {
+      "package": "pycrypto",
+      "health": 40.0,
+      "risk": 19.698715127789516,
+      "severity": "CRITICAL"
+    },
+    {
+      "package": "sqlitedict",
+      "health": 90.0,
+      "risk": 7.062267400999147,
+      "severity": "HIGH"
+    },
+    {
       "package": "plone.app.contenttypes",
       "health": 100,
-      "risk": 31.38798607686876,
+      "risk": 5.78445532899398,
       "severity": "CRITICAL"
     },
     {
-      "package": "plone-app-contenttypes",
+      "package": "tensorflow-gpu",
       "health": 100,
-      "risk": 31.38798607686876,
-      "severity": "CRITICAL"
-    },
-    {
-      "package": "starlite",
-      "health": 100,
-      "risk": 21.75158686097296,
+      "risk": 4.627564263195183,
       "severity": "HIGH"
     },
     {
-      "package": "sickrage",
-      "health": 85.0,
-      "risk": 12.011298856723194,
+      "package": "pysha3",
+      "health": 100,
+      "risk": 4.627564263195183,
       "severity": "CRITICAL"
     },
     {
-      "package": "pandasai",
+      "package": "horovod",
       "health": 100,
-      "risk": 6.495607655709434,
+      "risk": 4.627564263195183,
       "severity": "CRITICAL"
     },
     {
-      "package": "langflow-base",
+      "package": "youtube-dl",
       "health": 100,
-      "risk": 5.782537216049096,
+      "risk": 4.627564263195183,
       "severity": "HIGH"
     },
     {
-      "package": "qiskit-terra",
-      "health": 100,
-      "risk": 5.233268412549684,
-      "severity": "CRITICAL"
-    },
-    {
-      "package": "keystone",
-      "health": 100,
-      "risk": 5.1964861245675475,
+      "package": "js2py",
+      "health": 90.0,
+      "risk": 1.4124534801998294,
       "severity": "HIGH"
     },
     {
-      "package": "fschat",
-      "health": 100,
-      "risk": 4.541390312729302,
+      "package": "future",
+      "health": 90.0,
+      "risk": 0.941635653466553,
       "severity": "HIGH"
     },
     {
-      "package": "mindsdb",
-      "health": 0,
-      "risk": 2.4329692908744054,
-      "severity": "LOW"
+      "package": "ecdsa",
+      "health": 100,
+      "risk": 0.9255128526390367,
+      "severity": "HIGH"
     }
   ],
   "severity_distribution": {
-    "CRITICAL": 6,
-    "HIGH": 8,
-    "MODERATE": 5,
+    "CRITICAL": 5,
+    "HIGH": 11,
+    "MODERATE": 3,
     "LOW": 1
   },
   "metadata": {
     "total_vulnerable_packages": 65,
     "total_analyzed_repos": 10,
-    "timestamp": "2025-11-08T18:11:18.584441+00:00"
+    "timestamp": "2025-11-09T17:25:50.368478+00:00"
   }
 }

@@ -162,6 +162,7 @@ def analyze_risks_and_generate_report(G: nx.DiGraph) -> Tuple[List[Dict[str, Any
     
     # 1. Calculate In-Degree for all nodes (number of dependents)
     in_degree_map = dict(G.in_degree())
+    out_degree_map = dict(G.out_degree)
 
     for package_name, data in G.nodes(data=True):
         vulnerabilities = data.get('vulnerabilities', [])
@@ -202,15 +203,17 @@ def analyze_risks_and_generate_report(G: nx.DiGraph) -> Tuple[List[Dict[str, Any
                 })
 
             in_degree = in_degree_map.get(package_name, 0)
+            out_degree = out_degree_map.get(package_name, 0)
             
             # Weighted risk: multiply risk score by influence (sqrt of dependents)
-            weighted_risk_score = max_risk_score * (1 + (in_degree ** 0.5))
+            weighted_risk_score = max_risk_score * (1 + (out_degree ** 0.5))
 
             vulnerability_report.append({
                 'package_name': package_name,
                 'max_risk_score': max_risk_score,
                 'risk_level': max_risk_level,
                 'in_degree_dependents': in_degree,
+                'in_degree_dependents': out_degree,
                 'weighted_risk_score': weighted_risk_score,
                 'cwe_ids': list(all_cwe_ids), 
                 'vulnerability_summary': vulnerability_summary,
