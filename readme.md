@@ -19,8 +19,8 @@ It gathers data on popular packages, builds their dependency graphs, and checks 
 ### 1. Clone this repository
 
 ```bash
-git clone https://github.com/your-username/pypi-vulnerability-analyzer.git
-cd pypi-vulnerability-analyzer
+git clone [https://github.com/your-username/pypi-vulnerability-analyzer.git](https://github.com/Breno-VH/MC859/)
+cd MC859
 ```
 
 ### 2. Activate virtual env
